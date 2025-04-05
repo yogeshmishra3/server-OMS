@@ -52,7 +52,7 @@ app.use('/api/message', messageRoutes);
 // Middleware
 
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: 'https://office-management-system-three.vercel.app/',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -144,7 +144,7 @@ const transporter = nodemailer.createTransport({
 });
 
 // IMAP Configuration
-const imap = new Imap({ 
+const imap = new Imap({
   user: process.env.IMAP_USER,
   password: process.env.IMAP_PASS,
   host: process.env.IMAP_HOST,
@@ -246,11 +246,11 @@ app.post('/api/send-email', upload.single('attachment'), async (req, res) => {
 // Fetch Drafts Route
 app.get("/fetch-drafts", async (req, res) => {
   try {
-      const drafts = await Draft.find();
-      res.status(200).json(drafts);
+    const drafts = await Draft.find();
+    res.status(200).json(drafts);
   } catch (err) {
-      console.error("Error fetching drafts:", err);
-      res.status(500).json({ message: "Internal server error" });
+    console.error("Error fetching drafts:", err);
+    res.status(500).json({ message: "Internal server error" });
   }
 });
 

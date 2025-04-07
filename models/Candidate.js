@@ -38,13 +38,6 @@ const candidateSchema = new mongoose.Schema({
   zipCode: String,
   emergencyNo: String,
   officialEmail: String,
-  personalMail: {
-    type: String,
-    required: true,
-    unique: true,
-    trim: true,
-    lowercase: true
-  },
   aadharCard: String,
   joiningDate: Date,
   panCard: String,
@@ -72,15 +65,15 @@ const candidateSchema = new mongoose.Schema({
 });
 
 // Hash password before saving
-candidateSchema.pre('save', async function(next) {
+candidateSchema.pre('save', async function (next) {
   if (!this.isModified('password')) {
     return next();
   }
-  
+
   try {
     // Store the plain password temporarily for displaying in the credentials modal
     this.passwordPlain = this.password;
-    
+
     // Hash the password
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
@@ -91,7 +84,7 @@ candidateSchema.pre('save', async function(next) {
 });
 
 // Method to check password
-candidateSchema.methods.matchPassword = async function(enteredPassword) {
+candidateSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 

@@ -4,59 +4,46 @@ const Candidate = require('../models/Candidate');
 // Create a new candidate
 exports.createCandidate = async (req, res) => {
   try {
-    const { candidateId, personalMail, fullName, officialEmail } = req.body;
+    const { candidateId, fullName, officialEmail } = req.body;
 
-    // Validate personalMail
-    if (!personalMail || !personalMail.includes("@")) {
-      return res.status(400).json({ 
-        success: false, 
-        message: "Personal email is required and must be valid" 
-      });
-    }
-    
     // Check if candidate with this ID already exists
     const existingCandidate = await Candidate.findOne({ candidateId });
     if (existingCandidate) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Candidate with this ID already exists' 
+      return res.status(400).json({
+        success: false,
+        message: 'Candidate with this ID already exists'
       });
     }
-    
+
     // Set file paths if files were uploaded
     let photoUrl = null;
     let cvPath = null;
-    
+
     if (req.files) {
       if (req.files.photo && req.files.photo.length > 0) {
-        photoPath = req.files.photo[0].path.replace(/\\/g, '/');
+        photoUrl = req.files.photo[0].path.replace(/\\/g, '/');
       }
-      
+
       if (req.files.cv && req.files.cv.length > 0) {
         cvPath = req.files.cv[0].path.replace(/\\/g, '/');
       }
     }
-    
+
     // Set default password instead of generating a random one
     const password = "TARS@12";
-    
-    // Create email based on candidate ID and personal email domain or use personal email
-    // const emailDomain = personalMail.split('@')[1];
-    const email = `${officialEmail}`;
-    
-    // Create the candidate object - Make sure personalEmail is explicitly set
+
+    // Create the candidate object - Make sure email is explicitly set
     const newCandidate = new Candidate({
       ...req.body,
-      personalEmail: personalMail, // Add this line to match your schema's field name
       photoUrl,
       cvPath,
-      email,
+      email: officialEmail, // Use officialEmail from req.body
       password
     });
-    
+
     // Save to database
     await newCandidate.save();
-    
+
     // Return success response with credentials
     res.status(201).json({
       success: true,
@@ -67,7 +54,7 @@ exports.createCandidate = async (req, res) => {
         password: password // Use the default password directly
       }
     });
-    
+
   } catch (error) {
     console.error('Error creating candidate:', error);
     res.status(500).json({
@@ -99,17 +86,17 @@ exports.getAllCandidates = async (req, res) => {
 // Get a single candidate by ID
 exports.getCandidateById = async (req, res) => {
   try {
-    const candidate = await Candidate.findOne({ 
-      candidateId: req.params.id 
+    const candidate = await Candidate.findOne({
+      candidateId: req.params.id
     }).select('-password -passwordPlain');
-    
+
     if (!candidate) {
       return res.status(404).json({
         success: false,
         message: 'Candidate not found'
       });
     }
-    
+
     res.status(200).json({
       success: true,
       data: candidate
@@ -127,32 +114,32 @@ exports.getCandidateById = async (req, res) => {
 exports.updateCandidate = async (req, res) => {
   try {
     let candidate = await Candidate.findOne({ candidateId: req.params.id });
-    
+
     if (!candidate) {
       return res.status(404).json({
         success: false,
         message: 'Candidate not found'
       });
     }
-    
+
     // Update file paths if new files were uploaded
     if (req.files) {
       if (req.files.photo && req.files.photo.length > 0) {
-        req.body.photoPath = req.files.photo[0].path.replace(/\\/g, '/');
+        req.body.photoUrl = req.files.photo[0].path.replace(/\\/g, '/'); // Changed photoPath to photoUrl
       }
-      
+
       if (req.files.cv && req.files.cv.length > 0) {
         req.body.cvPath = req.files.cv[0].path.replace(/\\/g, '/');
       }
     }
-    
+
     // Update candidate
     candidate = await Candidate.findOneAndUpdate(
       { candidateId: req.params.id },
       req.body,
       { new: true, runValidators: true }
     ).select('-password -passwordPlain');
-    
+
     res.status(200).json({
       success: true,
       message: 'Candidate updated successfully',
@@ -171,17 +158,17 @@ exports.updateCandidate = async (req, res) => {
 exports.deleteCandidate = async (req, res) => {
   try {
     const candidate = await Candidate.findOne({ candidateId: req.params.id });
-    
+
     if (!candidate) {
       return res.status(404).json({
         success: false,
         message: 'Candidate not found'
       });
     }
-    
+
     // Delete the candidate
     await Candidate.findOneAndDelete({ candidateId: req.params.id });
-    
+
     res.status(200).json({
       success: true,
       message: 'Candidate deleted successfully'
@@ -199,7 +186,7 @@ exports.deleteCandidate = async (req, res) => {
 exports.loginCandidate = async (req, res) => {
   try {
     const { email, password } = req.body;
-    
+
     // Check if candidate exists
     const candidate = await Candidate.findOne({ email });
     if (!candidate) {
@@ -208,7 +195,7 @@ exports.loginCandidate = async (req, res) => {
         message: 'Invalid credentials'
       });
     }
-    
+
     // Check if password matches
     const isMatch = await candidate.matchPassword(password);
     if (!isMatch) {
@@ -217,7 +204,7 @@ exports.loginCandidate = async (req, res) => {
         message: 'Invalid credentials'
       });
     }
-    
+
     res.status(200).json({
       success: true,
       message: 'Login successful',
